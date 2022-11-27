@@ -51,11 +51,9 @@ function Table() {
           .filter((planet) => planet[filtered.columnFilter]
           < parseFloat(filtered.valueFilter)));
         break;
-      case 'igual a':
+      default:
         setFilterPlanets(filterPlanets
           .filter((planet) => planet[filtered.columnFilter] === filtered.valueFilter));
-        break;
-      default:
         break;
       }
     });
