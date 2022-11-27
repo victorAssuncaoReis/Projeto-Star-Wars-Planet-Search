@@ -3,6 +3,7 @@ import '../App.css';
 
 function Table() {
   const [planets, setPlanets] = useState([]);
+  const [filterPlanets, setFilterPlanets] = useState([]);
   const [inputFilter, setInputFilter] = useState('');
   const [columnFilter, setColumnFilter] = useState('population');
   const [comparisonFilter, setComparisonFilter] = useState('maior que');
@@ -12,33 +13,53 @@ function Table() {
   const apiFetch = async () => {
     fetch('https://swapi.dev/api/planets')
       .then((fetchApi) => fetchApi.json())
-      .then((json) => setPlanets(json.results));
+      .then((json) => {
+        setPlanets(json.results);
+        setFilterPlanets(json.results);
+      });
   };
 
   useEffect(() => {
     apiFetch();
   }, []);
 
-  const filterName = planets.filter((planet) => planet.name.includes(inputFilter));
+  useEffect(() => {
+    const filterName = planets
+      .filter((planet) => planet.name.includes(inputFilter));
+    setFilterPlanets(filterName);
+  }, [inputFilter, planets]);
 
-  const numericFilter = () => {
-    switch (comparisonFilter) {
-    case 'maior que':
-      setNumeric(filterName
-        .filter((planet) => planet[columnFilter] > parseFloat(valueFilter)));
-      break;
-    case 'menor que':
-      setNumeric(filterName
-        .filter((planet) => planet[columnFilter] < parseFloat(valueFilter)));
-      break;
-    case 'igual a':
-      setNumeric(filterName
-        .filter((planet) => planet[columnFilter] === valueFilter));
-      break;
-    default:
-      break;
-    }
+  const parameters = {
+    columnFilter,
+    valueFilter,
+    comparisonFilter };
+
+  const handleClick = () => {
+    setNumeric([...numeric, parameters]);
   };
+
+  useEffect(() => {
+    numeric.forEach((filtered) => {
+      switch (filtered.comparisonFilter) {
+      case 'maior que':
+        setFilterPlanets(filterPlanets
+          .filter((planet) => planet[filtered.columnFilter]
+          > parseFloat(filtered.valueFilter)));
+        break;
+      case 'menor que':
+        setFilterPlanets(filterPlanets
+          .filter((planet) => planet[filtered.columnFilter]
+          < parseFloat(filtered.valueFilter)));
+        break;
+      case 'igual a':
+        setFilterPlanets(filterPlanets
+          .filter((planet) => planet[filtered.columnFilter] === filtered.valueFilter));
+        break;
+      default:
+        break;
+      }
+    });
+  }, [numeric]);
 
   return (
     <div>
@@ -88,7 +109,7 @@ function Table() {
       <button
         data-testid="button-filter"
         type="button"
-        onClick={ numericFilter }
+        onClick={ handleClick }
       >
         Filtrar
       </button>
@@ -111,7 +132,7 @@ function Table() {
           </tr>
         </thead>
         <tbody>
-          { numeric.length > 0 ? numeric.map((planet) => (
+          { filterPlanets.map((planet) => (
             <tr key={ planet.name }>
               <td>{ planet.name }</td>
               <td>{ planet.rotation_period }</td>
@@ -132,27 +153,7 @@ function Table() {
               <td>{ planet.edited }</td>
               <td>{ planet.url }</td>
             </tr>
-          )) : filterName.map((namePlanet) => (
-            <tr key={ namePlanet.name }>
-              <td>{ namePlanet.name }</td>
-              <td>{ namePlanet.rotation_period }</td>
-              <td>{ namePlanet.orbital_period }</td>
-              <td>{ namePlanet.diameter }</td>
-              <td>{ namePlanet.climate }</td>
-              <td>{ namePlanet.gravity }</td>
-              <td>{ namePlanet.terrain }</td>
-              <td>{ namePlanet.surface_water }</td>
-              <td>{ namePlanet.population }</td>
-              <td>
-                { namePlanet.films.map((e, i) => (
-                  <p key={ i }>
-                    { e }
-                  </p>)) }
-              </td>
-              <td>{ namePlanet.created }</td>
-              <td>{ namePlanet.edited }</td>
-              <td>{ namePlanet.url }</td>
-            </tr>))}
+          ))}
         </tbody>
       </table>
     </div>
