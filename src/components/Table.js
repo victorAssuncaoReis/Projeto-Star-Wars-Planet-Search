@@ -18,7 +18,7 @@ function Table() {
   const [control, setControl] = useState(0);
   const [columnFilter, setColumnFilter] = useState('population');
   const [typeSort, setTypeSort] = useState('');
-  const [acrescenteFilter, setAcrescenteFilter] = useState(false);
+  const [crescenteFilter, setCrescenteFilter] = useState(false);
   const [decrescenteFilter, setDecrescenteFilter] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const apiFetch = async () => {
@@ -50,25 +50,26 @@ function Table() {
 
   const onClickFilter = ({ target: { name, value } }) => (setFilter({ ...filter,
     [name]: value }));
-
   const sortOnClick = ({ target: { value } }) => {
     setColumnFilter(value);
   };
   const onClickTypeSort = ({ target: { value } }) => {
     setTypeSort(value);
-    if (value === 'acrescente') {
-      setAcrescenteFilter(true);
+    switch (value) {
+    case 'crescente':
+      setCrescenteFilter(true);
       setDecrescenteFilter(false);
-    } if (value === 'decrescente') {
+      break;
+    default:
       setDecrescenteFilter(true);
-      setAcrescenteFilter(false);
+      setCrescenteFilter(false);
+      break;
     }
   };
   const buttonFilterNumber = () => {
     const valuesOfFiltersArray = numeric;
     valuesOfFiltersArray.push(filter);
     setNumeric(valuesOfFiltersArray);
-
     const AllTypesFilter = allFilterTypes.filter((ele) => ele !== filter.column);
     setAllFilterTypes(AllTypesFilter);
     setFilter({ ...filter, column: AllTypesFilter[0] });
@@ -93,13 +94,13 @@ function Table() {
     if (typeSort === 'decrescente') {
       return filtro.sort((a, b) => {
         if (b[columnFilter] === 'unknown') return minusOne;
-        return (+b[columnFilter] - +a[columnFilter]);
+        return (b[columnFilter] - a[columnFilter]);
       });
     }
-    if (typeSort === 'acrescente') {
+    if (typeSort === 'crescente') {
       return filtro.sort((a, b) => {
         if (b[columnFilter] === 'unknown') return minusOne;
-        return (+a[columnFilter] - +b[columnFilter]);
+        return (a[columnFilter] - b[columnFilter]);
       });
     }
     return filtro;
@@ -118,15 +119,14 @@ function Table() {
     }
     if (numeric.length > 0) {
       numeric.forEach((ele) => {
-        if (ele.compareFilter === 'maior que') {
+        switch (ele.compareFilter) {
+        case 'maior que':
           return setFilterPlanets(sortFilter(filterPlanets
             .filter((element) => +element[ele.column] > +ele.number)));
-        }
-        if (ele.compareFilter === 'menor que') {
+        case 'menor que':
           return setFilterPlanets(filterPlanets
             .filter((element) => +element[ele.column] < +ele.number));
-        }
-        if (ele.compareFilter === 'igual a') {
+        default:
           return setFilterPlanets(filterPlanets
             .filter((element) => +element[ele.column] === +ele.number));
         }
@@ -164,15 +164,15 @@ function Table() {
           {typeOfFilters
             .map((types) => <option key={ types } value={ types }>{types}</option>)}
         </select>
-        <label htmlFor="Acrescente">
-          Acrescente
+        <label htmlFor="Crescente">
+          Crescente
           <input
             type="radio"
-            id="Acrescente"
-            value="acrescente"
+            id="Crescente"
+            value="Crescente"
             data-testid="column-sort-input-asc"
             onChange={ onClickTypeSort }
-            checked={ acrescenteFilter }
+            checked={ crescenteFilter }
           />
         </label>
         <label htmlFor="Decrescente">
