@@ -59,6 +59,8 @@ function Table() {
     }
   };
 
+  // comparação para req 3 e 4
+
   const handleClick = () => {
     const filterArray = numeric;
     const filterValue = {
@@ -76,16 +78,18 @@ function Table() {
     comparisonFiltering();
   };
 
-  const handleDelete = (type) => {
+  // Também necessário para req 3 e 4
+
+  const handleDelete = (filterType) => {
     setFilterPlanets(planets);
-    const filtro = numeric.filter((ele) => ele.columnFilter !== type);
-    const deu = allFilterTypes;
-    deu.push(type);
-    setAllFilterTypes(deu);
-    setNumeric(filtro);
+    const filter = numeric.filter((ele) => ele.columnFilter !== filterType);
+    const filterTypesArray = allFilterTypes;
+    filterTypesArray.push(filterType);
+    setAllFilterTypes(filterTypesArray);
+    setNumeric(filter);
   };
 
-  const buttonDeleteAll = () => {
+  const handleDeleteAll = () => {
     setFilterPlanets(planets);
     setAllFilterTypes(typeOfFilters);
     setNumeric([]);
@@ -107,6 +111,9 @@ function Table() {
       }
     });
   }, [numeric]);
+
+  // switch case quebrando esse useEffect... Talvez o default quebre na última comparação?
+  // comparação para req 7
 
   return (
     <div>
@@ -155,7 +162,7 @@ function Table() {
       <button
         type="button"
         data-testid="button-remove-filters"
-        onClick={ buttonDeleteAll }
+        onClick={ handleDeleteAll }
       >
         Remover todos os filtros
       </button>
@@ -207,3 +214,5 @@ function Table() {
 }
 
 export default Table;
+
+// feito com ajuda de Gabriel Boubee
