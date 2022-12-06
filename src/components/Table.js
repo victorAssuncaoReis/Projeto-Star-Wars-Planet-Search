@@ -1,115 +1,163 @@
 import React, { useEffect, useState } from 'react';
-import '../App.css';
 
 function Table() {
+  const typeOfFilters = ['population', 'orbital_period', 'diameter',
+    'rotation_period', 'surface_water'];
+
   const [planets, setPlanets] = useState([]);
   const [filterPlanets, setFilterPlanets] = useState([]);
-  const [inputFilter, setInputFilter] = useState('');
+  const [filterName, setFilterName] = useState('');
   const [columnFilter, setColumnFilter] = useState('population');
   const [comparisonFilter, setComparisonFilter] = useState('maior que');
-  const [valueFilter, setValueFilter] = useState('0');
+  const [valueFilter, setValueFilter] = useState(0);
+  const [allFilterTypes, setAllFilterTypes] = useState(typeOfFilters);
   const [numeric, setNumeric] = useState([]);
 
   const apiFetch = async () => {
-    fetch('https://swapi.dev/api/planets')
-      .then((fetchApi) => fetchApi.json())
-      .then((json) => {
-        setPlanets(json.results);
-        setFilterPlanets(json.results);
-      });
+    const url = 'https://swapi.dev/api/planets';
+    const response = await fetch(url);
+    const result = await response.json();
+    result.results.forEach((element) => delete element.residents);
+    return result.results;
+  };
+
+  const apiOnMount = async () => {
+    setPlanets(await apiFetch());
   };
 
   useEffect(() => {
-    apiFetch();
+    apiOnMount();
   }, []);
 
   useEffect(() => {
-    const filterName = planets
-      .filter((planet) => planet.name.includes(inputFilter));
-    setFilterPlanets(filterName);
-  }, [inputFilter, planets]);
+    if (filterName.length === 0) {
+      setFilterPlanets(planets);
+    }
+  }, [filterName.length, planets]);
 
-  const parameters = {
-    columnFilter,
-    valueFilter,
-    comparisonFilter };
+  const handleFilter = ({ target: { value } }) => {
+    setFilterName(value);
+    if (value.length > 0) {
+      setFilterPlanets(planets.filter((element) => element.name.includes(value)));
+    }
+  };
+
+  const comparisonFiltering = () => {
+    switch (comparisonFilter) {
+    case 'maior que':
+      setFilterPlanets(filterPlanets
+        .filter((planet) => +planet[columnFilter] > valueFilter));
+      break;
+    case 'menor que':
+      setFilterPlanets(filterPlanets
+        .filter((planet) => +planet[columnFilter] < valueFilter));
+      break;
+    default:
+      setFilterPlanets(filterPlanets
+        .filter((planet) => planet[columnFilter] === valueFilter));
+      break;
+    }
+  };
 
   const handleClick = () => {
-    setNumeric([...numeric, parameters]);
+    const filterArray = numeric;
+    const filterValue = {
+      columnFilter,
+      compareFilter: comparisonFilter,
+      number: valueFilter,
+    };
+    filterArray.push(filterValue);
+    setNumeric(filterArray);
+
+    const allAppliedFilters = allFilterTypes.filter((e) => e !== columnFilter);
+    setAllFilterTypes(allAppliedFilters);
+    setColumnFilter(allAppliedFilters[0]);
+
+    comparisonFiltering();
+  };
+
+  const handleDelete = (type) => {
+    setFilterPlanets(planets);
+    const filtro = numeric.filter((ele) => ele.columnFilter !== type);
+    const deu = allFilterTypes;
+    deu.push(type);
+    setAllFilterTypes(deu);
+    setNumeric(filtro);
+  };
+
+  const buttonDeleteAll = () => {
+    setFilterPlanets(planets);
+    setAllFilterTypes(typeOfFilters);
+    setNumeric([]);
   };
 
   useEffect(() => {
-    numeric.forEach((filtered) => {
-      switch (filtered.comparisonFilter) {
-      case 'maior que':
-        setFilterPlanets(filterPlanets
-          .filter((planet) => planet[filtered.columnFilter]
-          > parseFloat(filtered.valueFilter)));
-        break;
-      case 'menor que':
-        setFilterPlanets(filterPlanets
-          .filter((planet) => planet[filtered.columnFilter]
-          < parseFloat(filtered.valueFilter)));
-        break;
-      default:
-        setFilterPlanets(filterPlanets
-          .filter((planet) => planet[filtered.columnFilter] === filtered.valueFilter));
-        break;
+    numeric.forEach((ele) => {
+      if (ele.compareFilter === 'maior que') {
+        return setFilterPlanets(filterPlanets
+          .filter((planet) => +planet[ele.columnFilter] > +ele.number));
+      }
+      if (ele.compareFilter === 'menor que') {
+        return setFilterPlanets(filterPlanets
+          .filter((planet) => +planet[ele.columnFilter] < +ele.number));
+      }
+      if (ele.compareFilter === 'igual a') {
+        return setFilterPlanets(filterPlanets
+          .filter((planet) => planet[ele.columnFilter] === +ele.number));
       }
     });
   }, [numeric]);
 
   return (
     <div>
-      <label htmlFor="name-filter">
-        <input
-          name="name-filter"
-          data-testid="name-filter"
-          onChange={ (e) => setInputFilter(e.target.value) }
-        />
-      </label>
-      <label htmlFor="column-filter">
+      <form>
+        <input type="text" onChange={ handleFilter } data-testid="name-filter" />
         <select
-          name="column-filter"
           data-testid="column-filter"
-          onChange={ (e) => setColumnFilter(e.target.value) }
-          value={ columnFilter }
+          onClick={ (e) => setColumnFilter(e.target.value) }
         >
-          <option value="population">population</option>
-          <option value="orbital_period">orbital_period</option>
-          <option value="diameter">diameter</option>
-          <option value="rotation_period">rotation_period</option>
-          <option value="surface_water">surface_water</option>
+          {allFilterTypes
+            .map((types) => <option key={ types } value={ types }>{types}</option>)}
         </select>
-      </label>
-      <label htmlFor="comparison-filter">
         <select
-          name="comparison-filter"
-          id="comparison-filter"
           data-testid="comparison-filter"
-          onChange={ (e) => setComparisonFilter(e.target.value) }
-          value={ comparisonFilter }
+          onClick={ (e) => setComparisonFilter(e.target.value) }
         >
           <option value="maior que">maior que</option>
           <option value="menor que">menor que</option>
           <option value="igual a">igual a</option>
         </select>
-      </label>
-      <label htmlFor="number">
         <input
-          name="number"
           type="number"
           data-testid="value-filter"
           onChange={ (e) => setValueFilter(e.target.value) }
           value={ valueFilter }
         />
-      </label>
+        <button
+          type="button"
+          data-testid="button-filter"
+          onClick={ handleClick }
+        >
+          Filtrar
+        </button>
+      </form>
+      {numeric.map((filtersUsed) => (
+        <div key={ filtersUsed.columnFilter } data-testid="filter">
+          <p>{filtersUsed.columnFilter}</p>
+          <button
+            type="button"
+            onClick={ () => handleDelete(filtersUsed.columnFilter) }
+          >
+            Remover
+          </button>
+        </div>
+      ))}
       <button
-        data-testid="button-filter"
         type="button"
-        onClick={ handleClick }
+        data-testid="button-remove-filters"
+        onClick={ buttonDeleteAll }
       >
-        Filtrar
+        Remover todos os filtros
       </button>
       <table>
         <thead>
@@ -130,26 +178,26 @@ function Table() {
           </tr>
         </thead>
         <tbody>
-          { filterPlanets.map((planet) => (
+          {filterPlanets.map((planet) => (
             <tr key={ planet.name }>
-              <td>{ planet.name }</td>
-              <td>{ planet.rotation_period }</td>
-              <td>{ planet.orbital_period }</td>
-              <td>{ planet.diameter }</td>
-              <td>{ planet.climate }</td>
-              <td>{ planet.gravity }</td>
-              <td>{ planet.terrain }</td>
-              <td>{ planet.surface_water }</td>
-              <td>{ planet.population }</td>
+              <td>{planet.name}</td>
+              <td>{planet.rotation_period}</td>
+              <td>{planet.orbital_period}</td>
+              <td>{planet.diameter}</td>
+              <td>{planet.climate}</td>
+              <td>{planet.gravity}</td>
+              <td>{planet.terrain}</td>
+              <td>{planet.surface_water}</td>
+              <td>{planet.population}</td>
               <td>
                 { planet.films.map((ele, i) => (
                   <p key={ i }>
                     { ele }
                   </p>)) }
               </td>
-              <td>{ planet.created }</td>
-              <td>{ planet.edited }</td>
-              <td>{ planet.url }</td>
+              <td>{planet.created}</td>
+              <td>{planet.edited}</td>
+              <td>{planet.url}</td>
             </tr>
           ))}
         </tbody>
