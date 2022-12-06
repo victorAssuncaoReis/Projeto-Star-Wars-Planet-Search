@@ -27,10 +27,14 @@ describe('Testa o componente Table', () => {
 
   it('Testa se ao digitar texto no input, é filtrada a lista de planetas', async () => {
     render(<App />);
-    const inputName = screen.getByTestId('name-filter')
-    userEvent.type(inputName, 'Ta')
-    const tatooine = await screen.findByText('Tatooine')
+    const inputName = screen.getByTestId('name-filter');
+    const tatooine = await screen.findByText(/Tatooine/i);
 
+    userEvent.type(inputName, 'Ta')
+
+    const rows = screen.getAllByRole('row');
+
+    expect(rows).toHaveLength(2);
     expect(tatooine).toBeInTheDocument();
   });
 
@@ -77,5 +81,57 @@ describe('Testa o componente Table', () => {
     expect(rows).toHaveLength(2)
     expect(yavin).toBeInTheDocument();
   });
+  it('Testa se é possível remover um filtro', async () => {
+    render(<App />);
 
+    await screen.findByText('Tatooine');
+    const button = screen.getByTestId('button-filter');
+
+    userEvent.click(button)
+
+    const rows = screen.getAllByRole('row');
+    expect(rows).toHaveLength(9)
+
+    const filter = screen.getByTestId('filter');
+    expect(filter).toBeInTheDocument();
+
+    const removeBtn = screen.getByText('Remover');
+    userEvent.click(removeBtn);
+    expect(filter).not.toBeInTheDocument();
+  });
+
+  it('se é possivel retirar todos os filtros', async () => {
+    render(<App />);
+
+    await screen.findByText('Tatooine')
+
+    const btn = screen.getByTestId('button-filter')
+    userEvent.click(btn)
+    const rows = screen.getAllByRole('row')
+    expect(rows).toHaveLength(9)
+    const btn2 = screen.getByTestId('button-remove-filters');
+    userEvent.click(btn2);
+  });
+
+  it('Testa se é aplicado o filtro igual a', async () => {
+    render(<App />);
+    const tatooine = await screen.findByText('Tatooine');
+
+    expect(tatooine).toBeInTheDocument();
+
+    const selectColumn = screen.getByTestId('column-filter');
+    const selectComparasion = screen.getByTestId('comparison-filter');
+    const inputNumber = screen.getByTestId('value-filter');
+    const getBtnFilter = screen.getByTestId('button-filter');
+
+    userEvent.selectOptions(selectColumn, 'orbital_period');
+    userEvent.selectOptions(selectComparasion, 'igual a');
+    userEvent.type(inputNumber, '5110');
+    userEvent.click(getBtnFilter);
+    /*     const bespin = await screen.findByText(/Bespin/i); */
+    const rows = screen.getAllByRole('row');
+    expect(rows).toHaveLength(2)
+    /*     expect(bespin).toBeInTheDocument(); */
+    expect(tatooine).not.toBeInTheDocument();
+  });
 })
